@@ -1,9 +1,14 @@
-# RCBot2 for Windows and Linux (TF2, HL2:DM, DOD:S)
+# RCBot2 - Universal Source Engine Support
 
 ## Information:-
 
 This is a fork of [the official RCBot2 plugin][rcbot2] written by Cheeseh.
 Special thanks to pongo1231 for adding more TF2 support and NoSoop for adding AMBuild support and many more!
+
+**RCBot2 now supports all Source Engine games!** The plugin automatically detects and loads support for multiple
+Source games (Team Fortress 2, Counter-Strike: Source, Day of Defeat: Source, Half-Life 2: Deathmatch, 
+Half-Life 1: Deathmatch Source, Fortress Forever, Synergy, Sven Coop, and more). For unsupported games,
+it falls back to generic Source Engine support.
 
 The [bots-united.com discord][] and [forums][bots-united forums] are the places to ask for
 general RCBot2 support. I'm not present in either of those; file an issue on this repository if
@@ -19,11 +24,11 @@ you need support for this particular project.
 Valve's cross platform make conversion tool and keeping copies of modified Source SDK files.
 - The plugin has been split into SDK-specific builds to ensure proper compatibility, using the
 same loader shim SourceMod uses to load mod-specific builds.
-	- The shim is named `RCBot2Meta` to maintain compatibility with existing files; mod-specific
-	plugins are named `rcbot.2.${MOD}`.
-	- The `sdk-split` branch only contains modifications to get the project running on the
-	new build tooling and SDK support without issues.  It should be fairly painless to merge
-	(though it does remove `using namespace std;` for sanity).
+    - The shim is named `RCBot2Meta` to maintain compatibility with existing files; mod-specific
+    plugins are named `rcbot.2.${MOD}`.
+    - The `sdk-split` branch only contains modifications to get the project running on the
+    new build tooling and SDK support without issues.  It should be fairly painless to merge
+    (though it does remove `using namespace std;` for sanity).
 - The usage of the install directory has been dropped.  In particular, waypoints must be located
 under `rcbot2/waypoints/${MOD}` instead of nested under a folder matching the name of the
 steamdir.
@@ -67,11 +72,13 @@ passing in `--depth 1` or a few to avoid retrieving the files that were removed 
 
 1. [Install the prerequisites for building SourceMod for your OS.][Building SourceMod]
 2. Create a `build/` subdirectory, then run `configure.py`.
-	- Use the following options (where `${MOD}` is only TF2):
-	`python ../configure.py -s ${MOD} --mms_path ${MMS_PATH} --hl2sdk-root ${HL2SDK_ROOT}`
-	- Specifying an `--sm-path` argument enables linking to SourceMod.
-	- Note that the automatic versioning system requires an installation of `git` and a
-	relatively modern version of Python 3. Python version 2 is now depreciated.
+    - Use the following options (supports all Source games):
+    `python ../configure.py -s ${MOD} --mms_path ${MMS_PATH} --hl2sdk-root ${HL2SDK_ROOT}`
+    - Where `${MOD}` can be any supported Source game (TF2, CSS, HL2DM, DOD, etc.)
+    - Since RCBot2 now supports all Source games via configuration, you only need to compile once for your target game
+    - Specifying an `--sm-path` argument enables linking to SourceMod.
+    - Note that the automatic versioning system requires an installation of `git` and a
+    relatively modern version of Python 3. Python version 2 is now depreciated.
 3. Run `ambuild`.  MetaMod:Source plugin is built and the base install files will be available
 in `build/package`.
 
@@ -91,8 +98,9 @@ Additionally, `rcbot/logging.{h,cpp}` is released separately under the
 
 ### To-do:-
 
+- **DONE:** Universal Source Engine support - RCBot2 now auto-detects and loads support for all Source games
+- **DONE:** Improved game detection via bot_mods.ini configuration file 
 - To allow bots to menuselect to buy upgrades for MVM
-- To improve game detection for non-listed Source gamemods
 - To add proper support for the new Zombie Infection TF2 maps since Scream Fortress XV update
 - To add proper support for Robot Destruction gameplay by destroying bots when not ubered
 - To prevent EngiBots from facing their SG Turrets the wrong way
@@ -100,7 +108,7 @@ Additionally, `rcbot/logging.{h,cpp}` is released separately under the
 - To improve on how Medic and Spy bots behave smarter and adequately when interacting with SG Turrets and Healing/Ubering
 - Bots need to understand how to play Kart games from sd_doomsday_event as they only wonder around those minigames
 - CBotTF2::changeClass needs to be implemented to avoid bots punting when using ClassRestrictionsForBots.smx and `rcbot_change_classes 1`
-- To add TF2C support along with Black Mesa Source, Counter-Strike: Source, Synergy and Dystopia
+- To add TF2C support along with Black Mesa Source and other custom mods
 
 ## Credits:-
 
@@ -125,9 +133,9 @@ Additionally, `rcbot/logging.{h,cpp}` is released separately under the
 - naMelesS
 - ati251
 - Sandman[SA]
-- Speed12	
+- Speed12    
 - MarioGuy3
-- Sjru	
+- Sjru    
 - Fillmore
 - htt123
 - swede
@@ -135,26 +143,26 @@ Additionally, `rcbot/logging.{h,cpp}` is released separately under the
 - ChiefEnragedDemo
 - madmax2
 - Pyri
-- Softny		
+- Softny        
 - Wolf
-- TesterYYY		
-- darkranger		
+- TesterYYY        
+- darkranger        
 - Emotional
-- J@ck@l		
+- J@ck@l        
 - YuriFR
-- Otakumanu		
+- Otakumanu        
 - 芝士人
 - Eye of Justice
-- TheSpyhasaGun (ScoutDogger)		
+- TheSpyhasaGun (ScoutDogger)        
 - NifesNforks
 - parkourtrane
 - assface
 - Doc Lithius
 - Kamaji
 - Geralt
-- Smoker		
+- Smoker        
 - dzoo11
-- Combine Soldier		
+- Combine Soldier        
 - cyglade
 - TFBot_Maverick
 - apdonato

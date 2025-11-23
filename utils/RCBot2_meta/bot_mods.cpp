@@ -60,236 +60,224 @@ std::vector<edict_wpt_pair_t> CHalfLifeDeathmatchMod::m_LiftWaypoints;
 
 void CBotMods::parseFile()
 {
-	char buffer[1024];
-	char key[64];
-	char val[256];
+    char buffer[1024];
+    char key[64];
+    char val[256];
 
-	eModId modtype = MOD_CUSTOM;
-	eBotType bottype = BOTTYPE_GENERIC;
-	
-	char gamefolder[256];
-	char weaponlist[64];
+    eModId modtype = MOD_CUSTOM;
+    eBotType bottype = BOTTYPE_GENERIC;
+    
+    char gamefolder[256];
+    char weaponlist[64];
 
-	CBotGlobals::buildFileName(buffer, BOT_MOD_FILE, BOT_CONFIG_FOLDER, BOT_CONFIG_EXTENSION);
+    CBotGlobals::buildFileName(buffer, BOT_MOD_FILE, BOT_CONFIG_FOLDER, BOT_CONFIG_EXTENSION);
 
-	std::fstream fp = CBotGlobals::openFile(buffer, std::fstream::in);
+    std::fstream fp = CBotGlobals::openFile(buffer, std::fstream::in);
 
-	CBotMod* curmod = nullptr;
+    CBotMod* curmod = nullptr;
 
-	if (!fp)
-	{
-		logger->Log(LogLevel::ERROR, "Failed to open file '%s' for reading", buffer);
-		return;
-	}
+    if (!fp)
+    {
+        logger->Log(LogLevel::WARNING, "Failed to open file '%s' for reading, loading default mods for universal support", buffer);
+        m_Mods.clear();
+        loadDefaultMods();
+        return;
+    }
 
-	while (fp.getline(buffer, 1023))
-	{
-		if (buffer[0] == '#')
-			continue;
+    while (fp.getline(buffer, 1023))
+    {
+        if (buffer[0] == '#')
+            continue;
 
-		std::size_t len = std::strlen(buffer);
+        std::size_t len = std::strlen(buffer);
 
-		if (len == 0)
-			continue;
+        if (len == 0)
+            continue;
 
-		if (buffer[len - 1] == '\n')
-			buffer[--len] = 0;
+        if (buffer[len - 1] == '\n')
+            buffer[--len] = 0;
 
-		std::size_t i = 0;
-		std::size_t j = 0;
+        std::size_t i = 0;
+        std::size_t j = 0;
 
-		while (i < len && buffer[i] != '=')
-		{
-			if (buffer[i] != ' ')
-				key[j++] = buffer[i];
-			i++;
-		}
+        while (i < len && buffer[i] != '=')
+        {
+            if (buffer[i] != ' ')
+                key[j++] = buffer[i];
+            i++;
+        }
 
-		i++;
+        i++;
 
-		key[j] = 0;
+        key[j] = 0;
 
-		j = 0;
+        j = 0;
 
-		while (i < len && buffer[i] != '\n' && buffer[i] != '\r')
-		{
-			if (j || buffer[i] != ' ')
-				val[j++] = buffer[i];
-			i++;
-		}
+        while (i < len && buffer[i] != '\n' && buffer[i] != '\r')
+        {
+            if (j || buffer[i] != ' ')
+                val[j++] = buffer[i];
+            i++;
+        }
 
-		val[j] = 0;
+        val[j] = 0;
 
-		if (!std::strcmp(key, "mod"))
-		{
-			if (curmod)
-			{
-				curmod->setup(gamefolder, modtype, bottype, weaponlist);
-				m_Mods.emplace_back(curmod);
-			}
+        if (!std::strcmp(key, "mod"))
+        {
+            if (curmod)
+            {
+                curmod->setup(gamefolder, modtype, bottype, weaponlist);
+                m_Mods.emplace_back(curmod);
+            }
 
-			curmod = nullptr;
-			weaponlist[0] = 0;
+            curmod = nullptr;
+            weaponlist[0] = 0;
 
-			bottype = BOTTYPE_GENERIC;
+            bottype = BOTTYPE_GENERIC;
 
-			//modtype = MOD_CUSTOM;
-			//TODO: Add Black Mesa Source support [APG]RoboCop[CL]
+            //modtype = MOD_CUSTOM;
+            //TODO: Add Black Mesa Source support [APG]RoboCop[CL]
 
-			if (!strcmpi("CUSTOM", val))
-			{
-				modtype = MOD_CUSTOM;
-				curmod = new CBotMod();
-			}
-			else if (!strcmpi("CSS", val))
-			{
-				modtype = MOD_CSS;
-				curmod = new CCounterStrikeSourceMod();
-			}
-			else if (!strcmpi("HL1DM", val))
-			{
-				modtype = MOD_HL1DMSRC;
-				curmod = new CHLDMSourceMod();
-			}
-			else if (!strcmpi("HL2DM", val))
-			{
-				modtype = MOD_HLDM2;
-				curmod = new CHalfLifeDeathmatchMod();
-			}
-			else if (!strcmpi("FF", val))
-			{
-				modtype = MOD_FF;
-				curmod = new CFortressForeverMod();
-			}
-			else if (!strcmpi("TF2", val))
-			{
-				modtype = MOD_TF2;
-				curmod = new CTeamFortress2Mod();
-			}
-			else if (!strcmpi("SVENCOOP2", val))
-			{
-				modtype = MOD_SVENCOOP2;
-				curmod = new CBotMod();
-			}
-			else if (!strcmpi("TIMCOOP", val))
-			{
-				modtype = MOD_TIMCOOP;
-				curmod = new CBotMod();
-			}
-			else if (!strcmpi("NS2", val))
-			{
-				modtype = MOD_NS2;
-				curmod = new CBotMod();
-			}
-			else if (!strcmpi("SYNERGY", val))
-			{
-				modtype = MOD_SYNERGY;
-				curmod = new CSynergyMod();
-			}
-			else if (!strcmpi("DOD", val))
-			{
-				modtype = MOD_DOD;
-				curmod = new CDODMod();
-			}
-			else
-				curmod = new CBotMod();
-		}
-		else if (curmod && !std::strcmp(key, "bot"))
-		{
-			if (!strcmpi("GENERIC", val))
-				bottype = BOTTYPE_GENERIC;
-			else if (!strcmpi("CSS", val))
-				bottype = BOTTYPE_CSS;
-			else if (!strcmpi("HL1DM", val))
-				bottype = BOTTYPE_HL1DM;
-			else if (!strcmpi("HL2DM", val))
-				bottype = BOTTYPE_HL2DM;
-			else if (!strcmpi("FF", val))
-				bottype = BOTTYPE_FF;
-			else if (!strcmpi("TF2", val))
-				bottype = BOTTYPE_TF2;
-			else if (!strcmpi("COOP", val))
-				bottype = BOTTYPE_COOP;
-			else if (!strcmpi("ZOMBIE", val))
-				bottype = BOTTYPE_ZOMBIE;
-			else if (!strcmpi("DOD", val))
-				bottype = BOTTYPE_DOD;
-			else if (!strcmpi("SYNERGY", val))
-				bottype = BOTTYPE_SYN;
-		}
-		else if (curmod && !strcmpi(key, "gamedir"))
-		{
-			std::strncpy(gamefolder, val, 255);
-		}
-		else if (curmod && !strcmpi(key, "weaponlist"))
-		{
-			std::strncpy(weaponlist, val, 63);
-		}
-	}
+            if (!strcmpi("CUSTOM", val))
+            {
+                modtype = MOD_CUSTOM;
+                curmod = new CBotMod();
+            }
+            else if (!strcmpi("CSS", val))
+            {
+                modtype = MOD_CSS;
+                curmod = new CCounterStrikeSourceMod();
+            }
+            else if (!strcmpi("HL1DM", val))
+            {
+                modtype = MOD_HL1DMSRC;
+                curmod = new CHLDMSourceMod();
+            }
+            else if (!strcmpi("HL2DM", val))
+            {
+                modtype = MOD_HLDM2;
+                curmod = new CHalfLifeDeathmatchMod();
+            }
+            else if (!strcmpi("FF", val))
+            {
+                modtype = MOD_FF;
+                curmod = new CFortressForeverMod();
+            }
+            else if (!strcmpi("TF2", val))
+            {
+                modtype = MOD_TF2;
+                curmod = new CTeamFortress2Mod();
+            }
+            else if (!strcmpi("SVENCOOP2", val))
+            {
+                modtype = MOD_SVENCOOP2;
+                curmod = new CBotMod();
+            }
+            else if (!strcmpi("TIMCOOP", val))
+            {
+                modtype = MOD_TIMCOOP;
+                curmod = new CBotMod();
+            }
+            else if (!strcmpi("NS2", val))
+            {
+                modtype = MOD_NS2;
+                curmod = new CBotMod();
+            }
+            else if (!strcmpi("SYNERGY", val))
+            {
+                modtype = MOD_SYNERGY;
+                curmod = new CSynergyMod();
+            }
+            else if (!strcmpi("DOD", val))
+            {
+                modtype = MOD_DOD;
+                curmod = new CDODMod();
+            }
+            else
+                curmod = new CBotMod();
+        }
+        else if (curmod && !std::strcmp(key, "bot"))
+        {
+            if (!strcmpi("GENERIC", val))
+                bottype = BOTTYPE_GENERIC;
+            else if (!strcmpi("CSS", val))
+                bottype = BOTTYPE_CSS;
+            else if (!strcmpi("HL1DM", val))
+                bottype = BOTTYPE_HL1DM;
+            else if (!strcmpi("HL2DM", val))
+                bottype = BOTTYPE_HL2DM;
+            else if (!strcmpi("FF", val))
+                bottype = BOTTYPE_FF;
+            else if (!strcmpi("TF2", val))
+                bottype = BOTTYPE_TF2;
+            else if (!strcmpi("COOP", val))
+                bottype = BOTTYPE_COOP;
+            else if (!strcmpi("ZOMBIE", val))
+                bottype = BOTTYPE_ZOMBIE;
+            else if (!strcmpi("DOD", val))
+                bottype = BOTTYPE_DOD;
+            else if (!strcmpi("SYNERGY", val))
+                bottype = BOTTYPE_SYN;
+        }
+        else if (curmod && !strcmpi(key, "gamedir"))
+        {
+            std::strncpy(gamefolder, val, 255);
+        }
+        else if (curmod && !strcmpi(key, "weaponlist"))
+        {
+            std::strncpy(weaponlist, val, 63);
+        }
+    }
 
-	if (curmod)
-	{
-		curmod->setup(gamefolder, modtype, bottype, weaponlist);
-		m_Mods.emplace_back(curmod);
-	}
+    if (curmod)
+    {
+        curmod->setup(gamefolder, modtype, bottype, weaponlist);
+        m_Mods.emplace_back(curmod);
+    }
+
+    if (m_Mods.empty())
+    {
+        logger->Log(LogLevel::WARNING, "No mods loaded from config file, loading default mods for universal support");
+        loadDefaultMods();
+    }
 }
 
 void CBotMods::readMods()
 {
-	// TODO improve game detection
-	// caxanga334: Better game detection required if we want to support multiple mods on the same engine (IE: SDK 2013)
-#if SOURCE_ENGINE == SE_TF2
-	m_Mods.emplace_back(new CTeamFortress2Mod());
-#elif SOURCE_ENGINE == SE_DODS
-	m_Mods.emplace_back(new CDODMod());
-#elif SOURCE_ENGINE == SE_CSS
-	m_Mods.emplace_back(new CCounterStrikeSourceMod());
-#elif SOURCE_ENGINE == SE_HL2DM
-	m_Mods.emplace_back(new CHalfLifeDeathmatchMod());
-#elif SOURCE_ENGINE == SE_SDK2013
-	m_Mods.emplace_back(new CSynergyMod());
-#else
-	//TODO: Add Black Mesa Source support [APG]RoboCop[CL]
-	m_Mods.emplace_back(new CFortressForeverMod());
-
-	m_Mods.emplace_back(new CHLDMSourceMod());
-
-	// Look for extra MODs
-
-	parseFile();
-#endif
+    m_Mods.clear();
+    parseFile();
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void CBotMod::setup(const char* szModFolder, const eModId iModId, const eBotType iBotType, const char* szWeaponListName)
 {
-	m_szModFolder = CStrings::getString(szModFolder);
-	m_iModId = iModId;
-	m_iBotType = iBotType;
+    m_szModFolder = CStrings::getString(szModFolder);
+    m_iModId = iModId;
+    m_iBotType = iBotType;
 
-	if (szWeaponListName && *szWeaponListName)
-		m_szWeaponListName = CStrings::getString(szWeaponListName);
+    if (szWeaponListName && *szWeaponListName)
+        m_szWeaponListName = CStrings::getString(szWeaponListName);
 }
 
 /*CBot *CBotMod :: makeNewBots ()
 {
-	return NULL;
+    return NULL;
 }*/
 
 bool CBotMod::isModFolder(const char* szModFolder) const
 {
-	return FStrEq(m_szModFolder, szModFolder);
+    return FStrEq(m_szModFolder, szModFolder);
 }
 
 char* CBotMod::getModFolder() const
 {
-	return m_szModFolder;
+    return m_szModFolder;
 }
 
 eModId CBotMod::getModId() const
 {
-	return m_iModId;
+    return m_iModId;
 }
 
 //
@@ -299,78 +287,112 @@ std::vector<CBotMod*> CBotMods::m_Mods;
 
 void CBotMods::freeMemory()
 {
-	for (CBotMod*& m_Mod : m_Mods)
-	{
-		m_Mod->freeMemory();
-		delete m_Mod;
-		m_Mod = nullptr;
-	}
+    for (CBotMod*& m_Mod : m_Mods)
+    {
+        m_Mod->freeMemory();
+        delete m_Mod;
+        m_Mod = nullptr;
+    }
 
-	m_Mods.clear();
+    m_Mods.clear();
 }
 
 CBotMod* CBotMods::getMod(char* szModFolder)
 {
-	for (CBotMod* const& m_Mod : m_Mods)
-	{
-		if (m_Mod->isModFolder(szModFolder))
-		{
-			logger->Log(LogLevel::INFO, "HL2 MOD ID %d (Game Folder = %s) FOUND", m_Mod->getModId(), szModFolder);
+    for (CBotMod* const& m_Mod : m_Mods)
+    {
+        if (m_Mod->isModFolder(szModFolder))
+        {
+            logger->Log(LogLevel::INFO, "HL2 MOD ID %d (Game Folder = %s) FOUND", m_Mod->getModId(), szModFolder);
 
-			return m_Mod;
-		}
-	}
+            return m_Mod;
+        }
+    }
 
-	logger->Log(LogLevel::FATAL, "HL2 MODIFICATION \"%s\" NOT FOUND, EXITING... see bot_mods.ini in bot config folder", szModFolder);
+    logger->Log(LogLevel::FATAL, "HL2 MODIFICATION \"%s\" NOT FOUND, EXITING... see bot_mods.ini in bot config folder", szModFolder);
 
-	return nullptr;
+    return nullptr;
+}
+
+void CBotMods::loadDefaultMods()
+{
+    logger->Log(LogLevel::INFO, "Loading default mods for universal Source Engine support");
+
+    m_Mods.emplace_back(new CTeamFortress2Mod());
+    m_Mods.back()->setup("tf", MOD_TF2, BOTTYPE_TF2, "TF2");
+
+    m_Mods.emplace_back(new CCounterStrikeSourceMod());
+    m_Mods.back()->setup("cstrike", MOD_CSS, BOTTYPE_CSS, "CSS");
+
+    m_Mods.emplace_back(new CDODMod());
+    m_Mods.back()->setup("dod", MOD_DOD, BOTTYPE_DOD, "DOD");
+
+    m_Mods.emplace_back(new CHalfLifeDeathmatchMod());
+    m_Mods.back()->setup("hl2mp", MOD_HLDM2, BOTTYPE_HL2DM, "HL2DM");
+
+    m_Mods.emplace_back(new CHLDMSourceMod());
+    m_Mods.back()->setup("hl1dm", MOD_HL1DMSRC, BOTTYPE_HL1DM, "HL1DMSRC");
+
+    m_Mods.emplace_back(new CFortressForeverMod());
+    m_Mods.back()->setup("ff", MOD_FF, BOTTYPE_FF, "FF");
+
+    m_Mods.emplace_back(new CSynergyMod());
+    m_Mods.back()->setup("synergy", MOD_SYNERGY, BOTTYPE_COOP, "SYNERGY");
+
+    m_Mods.emplace_back(new CBotMod());
+    m_Mods.back()->setup("svencoop2", MOD_SVENCOOP2, BOTTYPE_COOP, "SVENCOOP2");
+
+    m_Mods.emplace_back(new CBotMod());
+    m_Mods.back()->setup("custom", MOD_CUSTOM, BOTTYPE_GENERIC, "");
+
+    logger->Log(LogLevel::INFO, "Loaded %zu default mods", m_Mods.size());
 }
 
 void CBotMod::initMod()
 {
-	m_bPlayerHasSpawned = false;
+    m_bPlayerHasSpawned = false;
 
-	CWeapons::loadWeapons(m_szWeaponListName, nullptr);
+    CWeapons::loadWeapons(m_szWeaponListName, nullptr);
 }
 
 void CBotMod::mapInit()
 {
-	m_bPlayerHasSpawned = false;
+    m_bPlayerHasSpawned = false;
 }
 
 bool CBotMod::playerSpawned(edict_t* pPlayer)
 {
-	if (m_bPlayerHasSpawned)
-		return false;
+    if (m_bPlayerHasSpawned)
+        return false;
 
-	m_bPlayerHasSpawned = true;
+    m_bPlayerHasSpawned = true;
 
-	return true;
+    return true;
 }
 
 bool CHalfLifeDeathmatchMod::playerSpawned(edict_t* pPlayer)
 {
-	if (CBotMod::playerSpawned(pPlayer))
-	{
-		m_LiftWaypoints.clear();
+    if (CBotMod::playerSpawned(pPlayer))
+    {
+        m_LiftWaypoints.clear();
 
-		CWaypoints::updateWaypointPairs(&m_LiftWaypoints, CWaypointTypes::W_FL_LIFT, "func_button");
-	}
+        CWaypoints::updateWaypointPairs(&m_LiftWaypoints, CWaypointTypes::W_FL_LIFT, "func_button");
+    }
 
-	return true;
+    return true;
 }
 
 void CHalfLifeDeathmatchMod::initMod()
 {
-	CWeapons::loadWeapons(m_szWeaponListName == nullptr ? "HL2DM" : m_szWeaponListName, HL2DMWeaps.data());
+    CWeapons::loadWeapons(m_szWeaponListName == nullptr ? "HL2DM" : m_szWeaponListName, HL2DMWeaps.data());
 
-	//	for ( i = 0; i < HL2DM_WEAPON_MAX; i ++ )
-	//	CWeapons::addWeapon(new CWeapon(HL2DMWeaps[i]));//.iSlot,HL2DMWeaps[i].szWeaponName,HL2DMWeaps[i].iId,HL2DMWeaps[i].m_iFlags,HL2DMWeaps[i].m_iAmmoIndex,HL2DMWeaps[i].minPrimDist,HL2DMWeaps[i].maxPrimDist,HL2DMWeaps[i].m_iPreference,HL2DMWeaps[i].m_fProjSpeed));
+    //    for ( i = 0; i < HL2DM_WEAPON_MAX; i ++ )
+    //    CWeapons::addWeapon(new CWeapon(HL2DMWeaps[i]));//.iSlot,HL2DMWeaps[i].szWeaponName,HL2DMWeaps[i].iId,HL2DMWeaps[i].m_iFlags,HL2DMWeaps[i].m_iAmmoIndex,HL2DMWeaps[i].minPrimDist,HL2DMWeaps[i].maxPrimDist,HL2DMWeaps[i].m_iPreference,HL2DMWeaps[i].m_fProjSpeed));
 }
 
 void CHalfLifeDeathmatchMod::mapInit()
 {
-	CBotMod::mapInit();
+    CBotMod::mapInit();
 
-	m_LiftWaypoints.clear();
+    m_LiftWaypoints.clear();
 }
